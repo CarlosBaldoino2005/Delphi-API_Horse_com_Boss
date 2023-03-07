@@ -1,0 +1,12 @@
+{
+	"name": "Delphi-API_Horse_com_Boss",
+	"description": "",
+	"version": "1.0.0",
+	"homepage": "",
+	"mainsrc": "./",
+	"projects": [],
+	"dependencies": {
+		"https://github.com/hashload/horse": "^3.0.2",
+		"https://github.com/viniciussanchez/dataset-serialize": "^v2.4.8"
+	}
+}
