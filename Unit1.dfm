@@ -11,6 +11,7 @@ object Form1: TForm1
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object Button1: TButton
@@ -29,9 +30,5 @@ object Form1: TForm1
     Height = 201
     Align = alRight
     TabOrder = 1
-  end
-  object FDQuery1: TFDQuery
-    Left = 40
-    Top = 80
   end
 end
