@@ -5,16 +5,14 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.FMTBcd, Data.DB, Data.SqlExpr,
-  Vcl.StdCtrls, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
-  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
-  FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
-  Horse,Horse.Jhonson, System.JSON;
+  Vcl.StdCtrls,
+  Horse,Horse.Jhonson,Horse.Commons, Horse.BasicAuthentication, Horse.Compression,Horse.HandleException,
+  System.JSON;
 
 type
   TForm1 = class(TForm)
     Button1: TButton;
     Memo1: TMemo;
-    FDQuery1: TFDQuery;
     procedure Button1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
@@ -27,6 +25,8 @@ type
     { Public declarations }
     procedure GetUsuario(Req: THorseRequest; Res: THorseResponse; Next: TProc);
     procedure SetUsuario(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+    procedure DeleteUsuario(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+    function Autencicacao(const Ausername, APassWord: String):Boolean;
     procedure Iniciar;
   end;
 
@@ -38,6 +38,11 @@ implementation
 {$R *.dfm}
 
 uses Dataset.Serialize;
+
+function TForm1.Autencicacao(const Ausername, APassWord: String): Boolean;
+begin
+  Result := Ausername.Equals('user') and APassWord.Equals('password');
+end;
 
 procedure TForm1.Button1Click(Sender: TObject);
 begin
@@ -58,9 +63,12 @@ begin
 
   if not App.IsRunning then
   begin
-    App.Use(Jhonson);
+    App.Use(Compression());  // Comprimir
+    App.Use(Jhonson);    // Tipo de requisição
+    App.Use(HorseBasicAuthentication(Autencicacao)); // Autenticação
     App.Get(Caminho,GetUsuario);
     App.Post(Caminho,SetUsuario);
+    App.Delete(Caminho+'/:id',DeleteUsuario);
     App.Listen(9000);
     Memo1.Lines.Add('Iniciado');
   end else
@@ -76,10 +84,22 @@ begin
 end;
 
 procedure TForm1.SetUsuario(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+var i : Integer;
 begin
+  for I := 0 to 10000 do begin
+
   User := Req.Body<TJsonObject>.Clone as TJsonObject;
   Users.AddElement(User);
-  Res.Send<TJsonAncestor>(Users.Clone);
+  Res.Send<TJsonAncestor>(User.Clone).Status(THttpStatus.Created);
+  end;
+end;
+
+procedure TForm1.DeleteUsuario(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+Var Id : Integer;
+begin
+  Id := Req.Params.Items['ID'].ToInteger;
+  USers.Remove(Id).Free;
+  Res.Send<TJsonAncestor>(Users.Clone).Status(THttpStatus.NoContent);
 end;
 
 end.
